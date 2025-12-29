@@ -1,0 +1,41 @@
+{
+  "name": "aieai",
+  "version": "1.0.0",
+  "description": "Generador de cursos con IA - Escuela Americana de Innovación",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_OPTIONS=--openssl-legacy-provider next -p 3002",
+    "build": "NODE_OPTIONS='--openssl-legacy-provider --max-old-space-size=1536' next build",
+    "start": "next start -p 3002",
+    "lint": "standard"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JulioGrados/aieai.git"
+  },
+  "author": "Julio Grados",
+  "license": "MIT",
+  "dependencies": {
+    "@ant-design/icons": "^4.2.2",
+    "@zeit/next-css": "^1.0.1",
+    "antd": "^3.26.7",
+    "config": "git+ssh://git@github.com/JulioGrados/configeai.git",
+    "moment": "^2.29.0",
+    "next": "^9.5.5",
+    "next-redux-wrapper": "^4.0.1",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "react-markdown": "^6.0.3",
+    "react-redux": "^7.2.1",
+    "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
+    "redux-thunk": "^2.3.0",
+    "slug": "^2.1.1",
+    "styled-components": "^5.2.0",
+    "utils": "git+ssh://git@github.com/JulioGrados/utilseai.git"
+  },
+  "devDependencies": {
+    "babel-plugin-styled-components": "^1.11.1",
+    "standard": "^14.3.4"
+  }
+}
