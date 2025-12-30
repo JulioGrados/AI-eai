@@ -100,7 +100,7 @@ const ModuleChapters = ({ moduleId, courseId, handleChapterClick }) => {
               {chapter.name}
             </ChapterTitle>
           )}
-          <ChapterWordCount>{chapter.wordCount || 0} palabras</ChapterWordCount>
+          {/* <ChapterWordCount>{chapter.wordCount || 0} palabras</ChapterWordCount> */}
           {editingChapterId === chapter._id ? (
             <>
               <ActionIcon onClick={(e) => handleSaveChapter(e, chapter._id)}>
