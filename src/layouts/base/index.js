@@ -24,11 +24,18 @@ export const Base = ({ current, currentMenu, children }) => {
         collapsed={collapsed}
         onCollapse={() => onCollapse(!collapsed)}
       >
-        <BaseLogo>EAI</BaseLogo>
+        <BaseLogo>
+          <img
+            src="/static/img/eai_color.svg"
+            alt="EAI Logo"
+            style={{ width: '100%', height: '100%' }}
+          />
+        </BaseLogo>
         <Menu
           theme='dark'
           selectedKeys={[current]}
-          defaultOpenKeys={[currentMenu]}
+          defaultOpenKeys={['cursos']}
+          openKeys={['cursos']}
           mode='inline'
         >
           <SubMenu
@@ -56,7 +63,7 @@ export const Base = ({ current, currentMenu, children }) => {
       <BaseContent>
         <NavBar />
         <BaseBody>{children}</BaseBody>
-        <BaseFooter>Escuela Americana de Innovación ©2024</BaseFooter>
+        <BaseFooter>Escuela Americana de Innovación ©2026</BaseFooter>
       </BaseContent>
     </BaseLayout>
   )

@@ -13,7 +13,7 @@ export const Login = () => {
   return (
     <LoginContainer>
       <LoginLogo src='/static/img/eai_color.svg' alt='Imagen Logo' />
-      <LoginTitle>Cursos IA - EAI</LoginTitle>
+      <LoginTitle>Cursos AI - EAI</LoginTitle>
       <LoginForm {...authState} handleLogin={handleLogin} />
     </LoginContainer>
   )

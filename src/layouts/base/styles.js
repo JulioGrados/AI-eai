@@ -4,8 +4,8 @@ import styled from 'styled-components'
 const { Content, Footer } = Layout
 
 export const BaseLogo = styled.div`
-  height: 32px;
-  margin: 16px;
+  height: 42px;
+  margin: 8px;
   text-align: center;
   font-size: 18px;
   color: white;

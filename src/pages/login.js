@@ -15,7 +15,7 @@ const LoginPage = () => {
   return (
     <Fixed>
       <Head>
-        <title>Login - Cursos IA</title>
+        <title>Login - Cursos AI</title>
       </Head>
       <Login />
     </Fixed>
