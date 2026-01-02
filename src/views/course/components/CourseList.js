@@ -1,5 +1,5 @@
 import React from 'react'
-import { Icon } from 'antd'
+import { Icon, Modal, message } from 'antd'
 import Router from 'next/router'
 import {
   CourseListContainer,
@@ -63,7 +63,7 @@ import { useCourses } from '../../../hooks'
 
 export const CourseList = () => {
 
-  const { courses } = useCourses({})
+  const { courses, remove } = useCourses({})
   
   const handleCreateCourse = () => {
     Router.push('/cursos/crear')
@@ -81,8 +81,26 @@ export const CourseList = () => {
 
   const handleDeleteCourse = (e, courseId) => {
     e.stopPropagation()
-    // TODO: Implementar eliminación de curso (con confirmación)
-    console.log('Delete course:', courseId)
+
+    Modal.confirm({
+      title: '¿Estás seguro de eliminar este curso?',
+      content: 'Esta acción no se puede deshacer. Se eliminarán todos los módulos, lecciones y capítulos asociados.',
+      okText: 'Eliminar',
+      okType: 'danger',
+      cancelText: 'Cancelar',
+      onOk: async () => {
+        try {
+          message.loading('Eliminando curso...', 0)
+          await remove(courseId)
+          message.destroy()
+          message.success('Curso eliminado exitosamente')
+        } catch (error) {
+          message.destroy()
+          message.error('Error al eliminar el curso. Por favor intenta nuevamente.')
+          console.error('Error deleting course:', error)
+        }
+      }
+    })
   }
 
   return (
@@ -113,9 +131,9 @@ export const CourseList = () => {
               <CourseCardHeader>
                 <CourseTitle>{course.name}</CourseTitle>
                 <CourseActions>
-                  <ActionButton onClick={(e) => handleEditCourse(e, course._id)}>
+                  {/* <ActionButton onClick={(e) => handleEditCourse(e, course._id)}>
                     <Icon type="edit" />
-                  </ActionButton>
+                  </ActionButton> */}
                   <ActionButton
                     danger
                     onClick={(e) => handleDeleteCourse(e, course._id)}

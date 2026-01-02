@@ -4,6 +4,22 @@ import { useRouter } from 'next/router'
 import { useCourses, useModules } from '../../../hooks'
 import { listChapters, updateChapter } from 'utils/api/chapter'
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   CourseDetailContainer,
   CourseHeader,
   BackButton,
@@ -17,6 +33,168 @@ import {
 
 const { TabPane } = Tabs
 const { Panel } = Collapse
+
+// Componente Sortable para un módulo individual
+const SortableModulePanel = ({
+  module,
+  index,
+  courseId,
+  editingModuleId,
+  editingModuleName,
+  setEditingModuleId,
+  setEditingModuleName,
+  handleEditModule,
+  handleSaveModule,
+  handleCancelModuleEdit,
+  handleChapterClick,
+  isActive,
+  onToggle
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: module._id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    marginBottom: '12px'
+  }
+
+  const handleToggle = (e) => {
+    // Solo toggle si no es un clic en botones de acción
+    if (e.target.closest('[data-action-button]') || e.target.closest('[data-drag-handle]')) {
+      return
+    }
+    onToggle()
+  }
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div style={{
+        border: '1px solid #d9d9d9',
+        borderRadius: '2px',
+        backgroundColor: 'white'
+      }}>
+        {/* Header del módulo */}
+        <div
+          onClick={handleToggle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            cursor: 'pointer',
+            borderBottom: isActive ? '1px solid #d9d9d9' : 'none'
+          }}
+        >
+          {/* Icono de expansión */}
+          <Icon
+            type={isActive ? 'down' : 'right'}
+            style={{ fontSize: '12px', color: '#8c8c8c', transition: 'transform 0.3s' }}
+          />
+
+          {/* Icono de drag handle */}
+          <div
+            data-drag-handle
+            {...attributes}
+            {...listeners}
+            style={{
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px',
+              touchAction: 'none'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Icon type="menu" style={{ fontSize: '16px', color: '#8c8c8c' }} />
+          </div>
+
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: '#1890ff',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 600,
+            fontSize: '14px'
+          }}>
+            {module.order || index + 1}
+          </div>
+
+          {editingModuleId === module._id ? (
+            <Input
+              value={editingModuleName}
+              onChange={(e) => setEditingModuleName(e.target.value)}
+              onPressEnter={(e) => handleSaveModule(e, module._id)}
+              onClick={(e) => e.stopPropagation()}
+              style={{ flex: 1, marginRight: '8px' }}
+              autoFocus
+            />
+          ) : (
+            <span style={{ fontWeight: 500 }}>{module.name}</span>
+          )}
+
+          <span style={{ color: '#8c8c8c', fontSize: '13px' }}>
+            • {module.chaptersCount || 0} clases
+          </span>
+          <div style={{ flex: 1 }} />
+
+          {editingModuleId === module._id ? (
+            <>
+              <Icon
+                data-action-button
+                type="check"
+                style={{ color: '#52c41a', cursor: 'pointer' }}
+                onClick={(e) => handleSaveModule(e, module._id)}
+              />
+              <Icon
+                data-action-button
+                type="close"
+                style={{ color: '#ff4d4f', cursor: 'pointer' }}
+                onClick={handleCancelModuleEdit}
+              />
+            </>
+          ) : (
+            <>
+              <Icon
+                data-action-button
+                type="edit"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => handleEditModule(e, module)}
+              />
+              <Icon
+                data-action-button
+                type="delete"
+                style={{ color: '#ff4d4f', cursor: 'pointer' }}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Contenido colapsable */}
+        {isActive && (
+          <div style={{ padding: '16px' }}>
+            <ModuleChapters
+              moduleId={module._id}
+              courseId={courseId}
+              handleChapterClick={handleChapterClick}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 // Componente para manejar los capítulos de un módulo específico
 const ModuleChapters = ({ moduleId, courseId, handleChapterClick }) => {
@@ -115,9 +293,9 @@ const ModuleChapters = ({ moduleId, courseId, handleChapterClick }) => {
               <ActionIcon onClick={(e) => handleEditChapter(e, chapter)}>
                 <Icon type="edit" />
               </ActionIcon>
-              <ActionIcon>
+              {/* <ActionIcon>
                 <Icon type="delete" style={{ color: '#ff4d4f' }} />
-              </ActionIcon>
+              </ActionIcon> */}
             </>
           )}
         </ChapterItem>
@@ -131,12 +309,41 @@ export const CourseDetail = ({ courseId }) => {
   const [activeTab, setActiveTab] = useState('contenido')
   const [editingModuleId, setEditingModuleId] = useState(null)
   const [editingModuleName, setEditingModuleName] = useState('')
+  const [localModules, setLocalModules] = useState([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [activePanels, setActivePanels] = useState([])
 
   // Obtener datos del curso y módulos
   const { courses } = useCourses({ query: { _id: courseId } })
-  const { modules, update: updateModule } = useModules({ course: courseId })
+  const { modules, update: updateModule, reload: reloadModules } = useModules({ course: courseId })
 
   const course = courses[0] || {}
+
+  // Configurar sensores para drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Requiere mover el mouse 8px antes de activar el drag
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  )
+
+  // Sincronizar módulos locales con los del estado global
+  useEffect(() => {
+    // Solo actualizar si no estamos en medio de un drag and drop
+    if (modules && modules.length > 0 && !isDragging) {
+      // Ordenar módulos por el campo 'order' antes de asignarlos
+      const sortedModules = [...modules].sort((a, b) => (a.order || 0) - (b.order || 0))
+      setLocalModules(sortedModules)
+    }
+  }, [modules, isDragging])
+
+  const handleDragStart = () => {
+    setIsDragging(true)
+  }
 
   const handleBack = () => {
     router.push('/cursos')
@@ -202,6 +409,58 @@ export const CourseDetail = ({ courseId }) => {
     setEditingModuleName('')
   }
 
+  const handleTogglePanel = (moduleId) => {
+    setActivePanels(prev =>
+      prev.includes(moduleId)
+        ? prev.filter(id => id !== moduleId)
+        : [...prev, moduleId]
+    )
+  }
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) {
+      setIsDragging(false)
+      return
+    }
+
+    const oldIndex = localModules.findIndex((m) => m._id === active.id)
+    const newIndex = localModules.findIndex((m) => m._id === over.id)
+
+    // Reordenar módulos localmente
+    const newModules = arrayMove(localModules, oldIndex, newIndex)
+
+    // Actualizar el order de cada módulo basado en su nueva posición
+    const updatedModules = newModules.map((module, index) => ({
+      ...module,
+      order: index + 1
+    }))
+
+    // Actualizar estado local inmediatamente para UI fluida
+    setLocalModules(updatedModules)
+    setIsDragging(true)
+
+    // Actualizar en el backend en segundo plano
+    try {
+      const promises = updatedModules.map((module, index) =>
+        updateModule(module._id, { order: index + 1 })
+      )
+      await Promise.all(promises)
+
+      message.success('Orden de módulos actualizado')
+    } catch (error) {
+      console.error('Error updating module order:', error)
+      message.error('Error al actualizar el orden de los módulos')
+      // Revertir cambios en caso de error
+      const sortedModules = [...modules].sort((a, b) => (a.order || 0) - (b.order || 0))
+      setLocalModules(sortedModules)
+    } finally {
+      // Permitir sincronización después de completar la actualización
+      setIsDragging(false)
+    }
+  }
+
   return (
     <CourseDetailContainer>
       <CourseHeader>
@@ -210,7 +469,7 @@ export const CourseDetail = ({ courseId }) => {
         </BackButton>
         <CourseTitle>{course.name || 'Cargando...'}</CourseTitle>
         <Icon type="edit" style={{ fontSize: '18px', cursor: 'pointer' }} />
-        <Icon type="delete" style={{ fontSize: '18px', cursor: 'pointer', color: '#ff4d4f' }} />
+        {/* <Icon type="delete" style={{ fontSize: '18px', cursor: 'pointer', color: '#ff4d4f' }} /> */}
       </CourseHeader>
 
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
@@ -223,80 +482,36 @@ export const CourseDetail = ({ courseId }) => {
           }
           key="contenido"
         >
-          <Collapse
-            bordered={false}
-            expandIconPosition="left"
-            style={{ background: 'white' }}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
           >
-            {modules.map((module, index) => (
-              <Panel
-                header={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      background: '#1890ff',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 600,
-                      fontSize: '14px'
-                    }}>
-                      {module.order || index + 1}
-                    </div>
-                    {editingModuleId === module._id ? (
-                      <Input
-                        value={editingModuleName}
-                        onChange={(e) => setEditingModuleName(e.target.value)}
-                        onPressEnter={(e) => handleSaveModule(e, module._id)}
-                        onClick={(e) => e.stopPropagation()}
-                        style={{ flex: 1, marginRight: '8px' }}
-                        autoFocus
-                      />
-                    ) : (
-                      <span style={{ fontWeight: 500 }}>{module.name}</span>
-                    )}
-                    <span style={{ color: '#8c8c8c', fontSize: '13px' }}>
-                      • {module.chaptersCount || 0} clases
-                    </span>
-                    <div style={{ flex: 1 }} />
-                    {editingModuleId === module._id ? (
-                      <>
-                        <Icon
-                          type="check"
-                          style={{ color: '#52c41a', cursor: 'pointer' }}
-                          onClick={(e) => handleSaveModule(e, module._id)}
-                        />
-                        <Icon
-                          type="close"
-                          style={{ color: '#ff4d4f', cursor: 'pointer' }}
-                          onClick={handleCancelModuleEdit}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <Icon
-                          type="edit"
-                          style={{ cursor: 'pointer' }}
-                          onClick={(e) => handleEditModule(e, module)}
-                        />
-                        <Icon type="delete" style={{ color: '#ff4d4f', cursor: 'pointer' }} />
-                      </>
-                    )}
-                  </div>
-                }
-                key={module._id}
-              >
-                <ModuleChapters
-                  moduleId={module._id}
+            <SortableContext
+              items={localModules.map((m) => m._id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {localModules.map((module, index) => (
+                <SortableModulePanel
+                  key={module._id}
+                  module={module}
+                  index={index}
                   courseId={courseId}
+                  editingModuleId={editingModuleId}
+                  editingModuleName={editingModuleName}
+                  setEditingModuleId={setEditingModuleId}
+                  setEditingModuleName={setEditingModuleName}
+                  handleEditModule={handleEditModule}
+                  handleSaveModule={handleSaveModule}
+                  handleCancelModuleEdit={handleCancelModuleEdit}
                   handleChapterClick={handleChapterClick}
+                  isActive={activePanels.includes(module._id)}
+                  onToggle={() => handleTogglePanel(module._id)}
                 />
-              </Panel>
-            ))}
-          </Collapse>
+              ))}
+            </SortableContext>
+          </DndContext>
         </TabPane>
 
         <TabPane
@@ -309,7 +524,7 @@ export const CourseDetail = ({ courseId }) => {
           key="evaluaciones"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {modules.map((module, index) => (
+            {localModules.map((module, index) => (
               <div
                 key={module._id}
                 onClick={(e) => handleModuleEvaluation(e, courseId, module._id)}

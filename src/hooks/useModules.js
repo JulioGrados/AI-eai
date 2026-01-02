@@ -19,7 +19,8 @@ export const useModules = ({ course } = {}) => {
     if (loading === false && course) {
       dispatch(
         getModules({
-          query: { 'course.ref': course }
+          query: { 'course.ref': course },
+          sort: 'order'
         })
       )
     }

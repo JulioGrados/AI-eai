@@ -137,6 +137,16 @@ const CreateCourseForm = ({ form }) => {
           )}
         </Form.Item>
 
+        {/* Lecciones por módulo */}
+        <Form.Item label="Lecciones por módulo">
+          {getFieldDecorator('lessonCount', {
+            initialValue: 5,
+            rules: [{ required: true, message: 'Por favor selecciona la cantidad de lecciones por módulo' }]
+          })(
+            <InputNumber min={1} max={15} style={{ width: '100%' }} />
+          )}
+        </Form.Item>
+
         {/* Ingresa una materia */}
         <Form.Item label="Ingresa una materia">
           {getFieldDecorator('subject', {
