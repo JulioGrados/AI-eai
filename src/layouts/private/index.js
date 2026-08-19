@@ -3,7 +3,6 @@ import Router from 'next/router'
 import { session } from 'utils'
 
 import { Loader } from '../../components'
-import { Fixed } from '../fixed'
 
 import { PrivateMiddle } from './styles'
 
@@ -23,13 +22,11 @@ export const Private = Page => () => {
 
   if (isLogged) {
     return <Page />
-  } else {
-    return (
-      <Fixed>
-        <PrivateMiddle>
-          <Loader />
-        </PrivateMiddle>
-      </Fixed>
-    )
   }
+
+  return (
+    <PrivateMiddle>
+      <Loader text='Verificando sesión...' />
+    </PrivateMiddle>
+  )
 }

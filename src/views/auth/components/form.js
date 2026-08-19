@@ -10,32 +10,42 @@ const Login = ({ error, loading, handleLogin, form }) => {
     })
   }
   const { getFieldDecorator } = form
+
   return (
     <Form onSubmit={handleSubmit}>
-      <Form.Item>
+      <Form.Item label='Usuario'>
         {getFieldDecorator('username', {
-          rules: [{ required: true, message: 'Please input your username!' }]
+          rules: [{ required: true, message: 'Ingresa tu usuario' }]
         })(
           <Input
-            prefix={<Icon type='user' style={{ color: 'rgba(0,0,0,.25)' }} />}
-            placeholder='Username'
+            prefix={<Icon type='user' style={{ color: '#95a1b5' }} />}
+            placeholder='Usuario'
+            autoComplete='username'
           />
         )}
       </Form.Item>
-      <Form.Item>
+
+      <Form.Item label='Contraseña'>
         {getFieldDecorator('password', {
-          rules: [{ required: true, message: 'Please input your Password!' }]
+          rules: [{ required: true, message: 'Ingresa tu contraseña' }]
         })(
           <Input
-            prefix={<Icon type='lock' style={{ color: 'rgba(0,0,0,.25)' }} />}
+            prefix={<Icon type='lock' style={{ color: '#95a1b5' }} />}
             type='password'
             placeholder='Contraseña'
+            autoComplete='current-password'
           />
         )}
       </Form.Item>
-      <Form.Item>
-        {error && <Alert type='error' description={error} />}
-        <Button type='primary' htmlType='submit' loading={loading} block>
+
+      {error && (
+        <Form.Item style={{ marginBottom: 16 }}>
+          <Alert type='error' message={error} showIcon />
+        </Form.Item>
+      )}
+
+      <Form.Item style={{ marginBottom: 0 }}>
+        <Button type='primary' htmlType='submit' loading={loading} size='large' block>
           Ingresar
         </Button>
       </Form.Item>

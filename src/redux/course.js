@@ -1,6 +1,4 @@
 import {
-  listCourses,
-  createCourse,
   detailCourse,
   updateCourse,
   removeCourse,

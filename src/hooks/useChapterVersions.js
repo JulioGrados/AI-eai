@@ -44,7 +44,7 @@ export const useChapterVersions = ({ chapter } = {}) => {
   }
 
   const editContent = async (id, data) => {
-    return dispatch(editVersionContent(id, { ...data}))
+    return dispatch(editVersionContent(id, { ...data }))
   }
 
   const reload = async () => {

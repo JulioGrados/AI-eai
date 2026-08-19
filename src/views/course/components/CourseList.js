@@ -1,70 +1,40 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Icon, Modal, message } from 'antd'
 import Router from 'next/router'
+
+import { useCourses } from '../../../hooks'
+import {
+  PageHead,
+  PrimaryButton,
+  IconButton,
+  Chip,
+  MetaText,
+  EmptyState,
+  SkeletonBlock
+} from '../../../components/ui'
 import {
   CourseListContainer,
-  ListHeader,
-  ListTitle,
-  CreateButton,
+  Toolbar,
+  SearchField,
+  ResultCount,
   CourseGrid,
   CourseCard,
   CourseCardHeader,
+  CourseIcon,
   CourseTitle,
   CourseActions,
-  ActionButton,
-  CourseInfo,
-  CourseDetail,
+  CourseSubject,
+  CourseTags,
   CourseMeta,
-  MetaItem,
-  EmptyState,
-  EmptyIcon,
-  EmptyText,
-  EmptySubtext
+  SkeletonCard
 } from '../styles/list.styd'
 
-// Mock data - esto vendrá del backend después
-const mockCourses = [
-  {
-    id: '6918f824d8d7acfdc32b2eff',
-    title: 'Curso de Marketing Digital',
-    subject: 'Marketing digital',
-    language: 'Spanish',
-    academicLevel: 'Formación continua',
-    modulesCount: 10,
-    chaptersCount: 60,
-    createdAt: '2024-03-15',
-    updatedAt: '2024-03-20'
-  },
-  {
-    id: '6918f824d8d7acfdc32b2f00',
-    title: 'Fundamentos de SEO',
-    subject: 'SEO y posicionamiento web',
-    language: 'Spanish',
-    academicLevel: 'Formación continua',
-    modulesCount: 8,
-    chaptersCount: 48,
-    createdAt: '2024-03-10',
-    updatedAt: '2024-03-18'
-  },
-  {
-    id: '6918f824d8d7acfdc32b2f01',
-    title: 'Estrategias de Redes Sociales',
-    subject: 'Social media marketing',
-    language: 'Spanish',
-    academicLevel: 'Formación continua',
-    modulesCount: 6,
-    chaptersCount: 36,
-    createdAt: '2024-03-05',
-    updatedAt: '2024-03-15'
-  }
-]
-
-import { useCourses } from '../../../hooks'
+const normalize = value => (value || '').toString().toLowerCase().trim()
 
 export const CourseList = () => {
+  const { courses, loading, remove } = useCourses({})
+  const [search, setSearch] = useState('')
 
-  const { courses, remove } = useCourses({})
-  
   const handleCreateCourse = () => {
     Router.push('/cursos/crear')
   }
@@ -73,17 +43,11 @@ export const CourseList = () => {
     Router.push(`/cursos/${courseId}`)
   }
 
-  const handleEditCourse = (e, courseId) => {
-    e.stopPropagation()
-    // TODO: Implementar edición de curso
-    console.log('Edit course:', courseId)
-  }
-
-  const handleDeleteCourse = (e, courseId) => {
+  const handleDeleteCourse = (e, course) => {
     e.stopPropagation()
 
     Modal.confirm({
-      title: '¿Estás seguro de eliminar este curso?',
+      title: `¿Eliminar "${course.name}"?`,
       content: 'Esta acción no se puede deshacer. Se eliminarán todos los módulos, lecciones y capítulos asociados.',
       okText: 'Eliminar',
       okType: 'danger',
@@ -91,7 +55,7 @@ export const CourseList = () => {
       onOk: async () => {
         try {
           message.loading('Eliminando curso...', 0)
-          await remove(courseId)
+          await remove(course._id)
           message.destroy()
           message.success('Curso eliminado exitosamente')
         } catch (error) {
@@ -103,70 +67,125 @@ export const CourseList = () => {
     })
   }
 
+  const term = normalize(search)
+  const visibleCourses = term
+    ? courses.filter(course =>
+      normalize(course.name).includes(term) ||
+      normalize(course.subject).includes(term)
+    )
+    : courses
+
+  const isEmpty = !loading && courses.length === 0
+  const isFiltered = !loading && courses.length > 0 && visibleCourses.length === 0
+
   return (
     <CourseListContainer>
-      <ListHeader>
-        <ListTitle>Todos los cursos</ListTitle>
-        <CreateButton onClick={handleCreateCourse}>
-          <Icon type="plus" />
-          Crear nuevo curso
-        </CreateButton>
-      </ListHeader>
+      <PageHead
+        title='Cursos'
+        subtitle={
+          courses.length
+            ? `${courses.length} ${courses.length === 1 ? 'curso generado' : 'cursos generados'} con IA`
+            : 'Genera y administra los cursos creados con IA'
+        }
+        actions={
+          <PrimaryButton onClick={handleCreateCourse}>
+            <Icon type='plus' />
+            Crear curso
+          </PrimaryButton>
+        }
+      />
 
-      {courses.length === 0 ? (
-        <EmptyState>
-          <EmptyIcon>
-            <Icon type="book" />
-          </EmptyIcon>
-          <EmptyText>No hay cursos creados</EmptyText>
-          <EmptySubtext>Comienza creando tu primer curso con IA</EmptySubtext>
-        </EmptyState>
-      ) : (
+      {!isEmpty && (
+        <Toolbar>
+          <SearchField>
+            <Icon type='search' />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder='Buscar por título o materia...'
+            />
+          </SearchField>
+          {term && (
+            <ResultCount>
+              {visibleCourses.length} de {courses.length}
+            </ResultCount>
+          )}
+        </Toolbar>
+      )}
+
+      {loading && courses.length === 0 && (
         <CourseGrid>
-          {courses.map((course) => (
+          {[0, 1, 2, 3, 4, 5].map(index => (
+            <SkeletonCard key={index}>
+              <SkeletonBlock $width='60%' $height='16px' />
+              <SkeletonBlock $width='85%' />
+              <SkeletonBlock $width='40%' />
+            </SkeletonCard>
+          ))}
+        </CourseGrid>
+      )}
+
+      {isEmpty && (
+        <EmptyState
+          icon='read'
+          title='Todavía no hay cursos'
+          text='Crea tu primer curso: sube el material y la IA arma los módulos, las lecciones y las evaluaciones.'
+          action={
+            <PrimaryButton onClick={handleCreateCourse}>
+              <Icon type='plus' />
+              Crear curso
+            </PrimaryButton>
+          }
+        />
+      )}
+
+      {isFiltered && (
+        <EmptyState
+          icon='search'
+          title='Sin resultados'
+          text={`No encontramos cursos que coincidan con "${search}".`}
+        />
+      )}
+
+      {visibleCourses.length > 0 && (
+        <CourseGrid>
+          {visibleCourses.map((course) => (
             <CourseCard
               key={course._id}
               onClick={() => handleCourseClick(course._id)}
             >
               <CourseCardHeader>
+                <CourseIcon>
+                  <Icon type='read' />
+                </CourseIcon>
                 <CourseTitle>{course.name}</CourseTitle>
                 <CourseActions>
-                  {/* <ActionButton onClick={(e) => handleEditCourse(e, course._id)}>
-                    <Icon type="edit" />
-                  </ActionButton> */}
-                  <ActionButton
-                    danger
-                    onClick={(e) => handleDeleteCourse(e, course._id)}
+                  <IconButton
+                    $danger
+                    title='Eliminar curso'
+                    onClick={(e) => handleDeleteCourse(e, course)}
                   >
-                    <Icon type="delete" />
-                  </ActionButton>
+                    <Icon type='delete' />
+                  </IconButton>
                 </CourseActions>
               </CourseCardHeader>
 
-              <CourseInfo>
-                <CourseDetail>
-                  <Icon type="tag" />
-                  {course.subject}
-                </CourseDetail>
-                <CourseDetail>
-                  <Icon type="global" />
-                  {course.language}
-                </CourseDetail>
-                <CourseDetail>
-                  <Icon type="book" />
-                  {course.academicLevel}
-                </CourseDetail>
-              </CourseInfo>
+              <CourseSubject>{course.subject || 'Sin materia asignada'}</CourseSubject>
+
+              <CourseTags>
+                {course.language && <Chip>{course.language}</Chip>}
+                {course.academicLevel && <Chip>{course.academicLevel}</Chip>}
+              </CourseTags>
 
               <CourseMeta>
-                <MetaItem>
-                  <Icon type="folder" />
-                  {course.modulesCount} módulos
-                </MetaItem>
-                <MetaItem>
-                  <Icon type="file-text" />
-                  {course.chaptersCount} capítulos
-                </MetaItem>
+                <MetaText>
+                  <Icon type='folder' />
+                  {course.modulesCount || 0} módulos
+                </MetaText>
+                <MetaText>
+                  <Icon type='file-text' />
+                  {course.chaptersCount || 0} capítulos
+                </MetaText>
               </CourseMeta>
             </CourseCard>
           ))}

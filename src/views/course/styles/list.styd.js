@@ -1,154 +1,182 @@
 import styled from 'styled-components'
+import {
+  color,
+  radius,
+  shadow,
+  space,
+  text,
+  transition,
+  media
+} from '../../../styles/theme'
 
 export const CourseListContainer = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 `
 
-export const ListHeader = styled.div`
+export const Toolbar = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-`
+  gap: ${space.md};
+  margin-bottom: ${space.xl};
 
-export const ListTitle = styled.h1`
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-  color: #262626;
-`
-
-export const CreateButton = styled.button`
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  &:hover {
-    background: #40a9ff;
+  ${media.sm} {
+    flex-wrap: wrap;
   }
+`
+
+export const SearchField = styled.div`
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+
+  i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: ${color.inkFaint};
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px 0 38px;
+    font-family: inherit;
+    font-size: ${text.body};
+    color: ${color.ink};
+    background: ${color.surface};
+    border: 1px solid ${color.line};
+    border-radius: ${radius.sm};
+    transition: all ${transition.fast};
+
+    &::placeholder {
+      color: ${color.inkFaint};
+    }
+
+    &:hover {
+      border-color: ${color.lineStrong};
+    }
+
+    &:focus {
+      outline: none;
+      border-color: ${color.brand};
+      box-shadow: 0 0 0 3px ${color.brandTint};
+    }
+  }
+`
+
+export const ResultCount = styled.span`
+  font-size: ${text.small};
+  color: ${color.inkFaint};
+  white-space: nowrap;
 `
 
 export const CourseGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: ${space.lg};
 `
 
-export const CourseCard = styled.div`
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
+export const CourseCard = styled.article`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
   padding: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: white;
+  transition: border-color ${transition.base}, box-shadow ${transition.base}, transform ${transition.base};
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #1890ff;
+    border-color: ${color.brandTintStrong};
+    box-shadow: ${shadow.md};
+    transform: translateY(-2px);
   }
 `
 
-export const CourseCardHeader = styled.div`
+export const CourseCardHeader = styled.header`
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  gap: ${space.md};
+  margin-bottom: ${space.md};
+`
+
+export const CourseIcon = styled.div`
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: ${radius.md};
+  background: ${color.brandTint};
+  color: ${color.brand};
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `
 
 export const CourseTitle = styled.h3`
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: #262626;
   flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: ${color.ink};
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 `
 
 export const CourseActions = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 2px;
+  flex: none;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity ${transition.fast};
 
   ${CourseCard}:hover & {
     opacity: 1;
   }
 `
 
-export const ActionButton = styled.button`
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  color: #8c8c8c;
-  display: flex;
-  align-items: center;
-
-  &:hover {
-    color: ${props => props.danger ? '#ff4d4f' : '#1890ff'};
-  }
+export const CourseSubject = styled.p`
+  font-size: ${text.small};
+  color: ${color.inkMuted};
+  margin: 0 0 ${space.lg};
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 20px;
 `
 
-export const CourseInfo = styled.div`
+export const CourseTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: ${space.lg};
+`
+
+export const CourseMeta = styled.footer`
+  display: flex;
+  align-items: center;
+  gap: ${space.lg};
+  margin-top: auto;
+  padding-top: ${space.md};
+  border-top: 1px solid ${color.line};
+`
+
+export const SkeletonCard = styled.div`
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-`
-
-export const CourseDetail = styled.div`
-  font-size: 13px;
-  color: #8c8c8c;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-`
-
-export const CourseMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-`
-
-export const MetaItem = styled.div`
-  font-size: 12px;
-  color: #8c8c8c;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`
-
-export const EmptyState = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #8c8c8c;
-`
-
-export const EmptyIcon = styled.div`
-  font-size: 64px;
-  margin-bottom: 16px;
-  color: #d9d9d9;
-`
-
-export const EmptyText = styled.div`
-  font-size: 16px;
-  margin-bottom: 8px;
-  color: #595959;
-`
-
-export const EmptySubtext = styled.div`
-  font-size: 14px;
-  color: #8c8c8c;
+  gap: ${space.md};
 `

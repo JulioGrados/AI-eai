@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import {
@@ -16,19 +16,42 @@ export const useEvaluations = ({ module, examId } = {}) => {
   )
   const dispatch = useDispatch()
 
+  // `ready` indica que ya terminó la consulta de ESTE módulo. Sin esto, al
+  // entrar a un módulo nuevo el estado todavía tiene la lista del módulo
+  // anterior y no se puede distinguir "sin evaluación" de "aún no consultado"
+  const [ready, setReady] = useState(!module)
+
   useEffect(() => {
-    if (examId && !loading) {
+    if (examId) {
       dispatch(getEvaluation(examId))
     }
   }, [examId])
 
   useEffect(() => {
-    if (loading === false && module) {
+    if (!module) {
+      setReady(true)
+      return
+    }
+
+    let alive = true
+    setReady(false)
+
+    // Siempre se recarga al cambiar de módulo. Antes había un `loading === false`
+    // que, si coincidía con otra petición en curso, dejaba la consulta sin hacer
+    Promise.resolve(
       dispatch(
         getEvaluations({
           query: { lesson: module }
         })
       )
+    ).then(() => {
+      if (alive) {
+        setReady(true)
+      }
+    })
+
+    return () => {
+      alive = false
     }
   }, [module])
 
@@ -59,6 +82,7 @@ export const useEvaluations = ({ module, examId } = {}) => {
     evaluations,
     exam,
     loading,
+    ready,
     update,
     create,
     error,

@@ -1,331 +1,297 @@
 import styled from 'styled-components'
+import {
+  color,
+  radius,
+  shadow,
+  space,
+  text,
+  transition,
+  media
+} from '../../../styles/theme'
 
 export const EvaluationContainer = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-`
-
-export const EvaluationHeader = styled.div`
   display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
-`
-
-export const BackButton = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 1px solid #d9d9d9;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  &:hover {
-    background-color: #f5f5f5;
-  }
-`
-
-export const ModuleTitleInput = styled.input`
-  font-size: 24px;
-  font-weight: 600;
-  border: none;
-  flex: 1;
-  padding: 8px;
-  border-radius: 4px;
-  &:hover {
-    background-color: #f5f5f5;
-  }
-  &:focus {
-    outline: none;
-    background-color: #e6f7ff;
-    border: 1px solid #1890ff;
-  }
+  flex-direction: column;
 `
 
 export const ContentWrapper = styled.div`
   display: grid;
-  grid-template-columns: 350px 1fr;
-  gap: 24px;
-  height: calc(100vh - 250px);
-`
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: ${space.xl};
+  align-items: start;
 
-export const LeftPanel = styled.div`
-  border-right: 1px solid #f0f0f0;
-  padding-right: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`
-
-export const GenerateSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-export const GenerateButton = styled.button`
-  background: #1890ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  &:hover {
-    background: #40a9ff;
+  ${media.lg} {
+    grid-template-columns: 250px minmax(0, 1fr);
   }
-  &:disabled {
-    background: #d9d9d9;
-    cursor: not-allowed;
+
+  ${media.md} {
+    grid-template-columns: 1fr;
   }
 `
 
-export const PromptInput = styled.textarea`
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 10px;
-  font-size: 13px;
-  resize: vertical;
-  min-height: 80px;
-  &:focus {
-    outline: none;
-    border-color: #1890ff;
+export const LeftPanel = styled.aside`
+  position: sticky;
+  top: 88px;
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: ${space.lg};
+  max-height: calc(100vh - 120px);
+
+  ${media.md} {
+    position: static;
+    max-height: none;
   }
 `
 
 export const VersionList = styled.div`
-  flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  overflow-y: auto;
+  margin: 0 -4px;
+  padding: 0 4px;
 `
 
-export const VersionItem = styled.div`
-  padding: 12px;
-  border: 1px solid ${props => props.isActive ? '#1890ff' : '#d9d9d9'};
-  background: ${props => props.isActive ? '#e6f7ff' : 'white'};
-  border-radius: 4px;
-  cursor: pointer;
+export const VersionItem = styled.button`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: ${space.md};
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: ${radius.sm};
+  border: 1px solid ${props => props.$active ? color.brand : color.line};
+  background: ${props => props.$active ? color.brandTint : color.surface};
+  cursor: pointer;
+  font-family: inherit;
+  transition: all ${transition.fast};
+
   &:hover {
-    background: ${props => props.isActive ? '#e6f7ff' : '#fafafa'};
+    border-color: ${props => props.$active ? color.brand : color.lineStrong};
+    background: ${props => props.$active ? color.brandTint : color.surfaceAlt};
+  }
+
+  &:focus {
+    outline: none;
   }
 `
 
-export const VersionInfo = styled.div`
+export const VersionInfo = styled.span`
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 `
 
-export const VersionNumber = styled.div`
+export const VersionNumber = styled.span`
+  font-size: ${text.small};
   font-weight: 600;
-  font-size: 14px;
-  color: #262626;
+  color: ${props => props.$active ? color.brand : color.inkStrong};
 `
 
-export const VersionDate = styled.div`
-  font-size: 12px;
-  color: #8c8c8c;
+export const VersionDate = styled.span`
+  font-size: ${text.micro};
+  color: ${color.inkFaint};
 `
 
 export const FavoriteIcon = styled.span`
-  cursor: pointer;
-  font-size: 18px;
-  color: ${props => props.isFavorite ? '#fadb14' : '#d9d9d9'};
+  display: flex;
+  align-items: center;
+  flex: none;
+  font-size: 15px;
+  color: ${props => props.$favorite ? color.star : color.lineStrong};
+  transition: color ${transition.fast};
+
   &:hover {
-    color: ${props => props.isFavorite ? '#ffc53d' : '#bfbfbf'};
+    color: ${props => props.$favorite ? color.warning : color.inkFaint};
   }
 `
 
 export const RightPanel = styled.div`
-  padding: 24px;
-  overflow-y: auto;
-  background: #fafafa;
-  border-radius: 4px;
-`
-
-export const PromptDisplay = styled.div`
-  background: #f5f5f5;
-  border-left: 3px solid #1890ff;
-  padding: 16px;
-  margin-bottom: 24px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #595959;
-  line-height: 1.6;
-`
-
-export const PromptLabel = styled.div`
-  font-weight: 600;
-  color: #262626;
-  margin-bottom: 8px;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`
-
-export const ContentText = styled.div`
-  background: white;
-  padding: 20px;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #595959;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  gap: ${space.lg};
+  min-width: 0;
 `
 
 export const QuestionsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${space.md};
 `
 
-export const QuestionCard = styled.div`
-  background: white;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  padding: 20px;
+export const QuestionCard = styled.article`
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
+  box-shadow: ${shadow.xs};
+  padding: 22px 24px;
+
+  ${media.sm} {
+    padding: 18px;
+  }
 `
 
-export const QuestionHeader = styled.div`
+export const QuestionHeader = styled.header`
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: ${space.md};
+  margin-bottom: ${space.lg};
 `
 
-export const QuestionNumber = styled.div`
-  background: #1890ff;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+export const QuestionText = styled.p`
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
-  font-size: 13px;
-  flex-shrink: 0;
-`
-
-export const QuestionText = styled.div`
-  flex: 1;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #262626;
-  font-weight: 500;
-`
-
-export const QuestionInput = styled.input`
-  flex: 1;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #262626;
-  font-weight: 500;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 8px 12px;
-  &:focus {
-    outline: none;
-    border-color: #1890ff;
-  }
+  color: ${color.ink};
+  line-height: 1.55;
 `
 
 export const OptionsList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-left: 40px;
+  gap: 8px;
+  padding-left: 42px;
+
+  ${media.sm} {
+    padding-left: 0;
+  }
 `
 
 export const OptionItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 6px;
-  background: ${props => props.isCorrect ? '#f6ffed' : '#fafafa'};
-  border: 1px solid ${props => props.isCorrect ? '#b7eb8f' : '#e8e8e8'};
+  gap: ${space.md};
+  padding: 11px 14px;
+  border-radius: ${radius.sm};
+  background: ${props => props.$correct ? color.successTint : color.surfaceAlt};
+  border: 1px solid ${props => props.$correct ? color.successLine : color.line};
 `
 
-export const OptionLabel = styled.div`
+export const OptionLabel = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
-  background: ${props => props.isCorrect ? '#52c41a' : 'white'};
-  color: ${props => props.isCorrect ? 'white' : '#8c8c8c'};
-  border: 2px solid ${props => props.isCorrect ? '#52c41a' : '#d9d9d9'};
+  flex: none;
+  border-radius: ${radius.sm};
+  background: ${props => props.$correct ? color.success : color.surface};
+  color: ${props => props.$correct ? color.white : color.inkMuted};
+  border: 1px solid ${props => props.$correct ? color.success : color.lineStrong};
+  font-size: ${text.micro};
+  font-weight: 600;
+`
+
+export const OptionText = styled.span`
+  flex: 1;
+  font-size: ${text.small};
+  color: ${color.inkBody};
+`
+
+export const CorrectBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: ${radius.pill};
+  background: ${color.success};
+  color: ${color.white};
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  flex: none;
+`
+
+export const ContentText = styled.div`
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
+  padding: 24px;
+  font-size: ${text.small};
+  line-height: 1.8;
+  color: ${color.inkBody};
+  white-space: pre-wrap;
+  word-wrap: break-word;
+`
+
+export const ComposerCard = styled.div`
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.lg};
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: ${space.md};
+`
+
+export const ComposerHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: ${space.sm};
+  font-size: ${text.small};
   font-weight: 600;
-  font-size: 12px;
-  flex-shrink: 0;
+  color: ${color.inkStrong};
 `
 
-export const OptionText = styled.div`
-  flex: 1;
-  font-size: 14px;
-  color: #595959;
-`
+export const PromptInput = styled.textarea`
+  width: 100%;
+  min-height: 84px;
+  padding: 12px 14px;
+  border: 1px solid ${color.line};
+  border-radius: ${radius.sm};
+  background: ${color.surfaceAlt};
+  font-family: inherit;
+  font-size: ${text.small};
+  color: ${color.ink};
+  line-height: 1.6;
+  resize: vertical;
+  transition: all ${transition.fast};
 
-export const OptionInput = styled.input`
-  flex: 1;
-  font-size: 14px;
-  color: #595959;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 6px 10px;
+  &::placeholder {
+    color: ${color.inkFaint};
+  }
+
   &:focus {
     outline: none;
-    border-color: #1890ff;
+    background: ${color.surface};
+    border-color: ${color.brand};
+    box-shadow: 0 0 0 3px ${color.brandTint};
   }
 `
 
-export const SaveButton = styled.button`
-  background: #52c41a;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+export const ComposerActions = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
-  &:hover {
-    background: #73d13d;
-  }
-  &:disabled {
-    background: #d9d9d9;
-    cursor: not-allowed;
-  }
+  justify-content: flex-end;
 `
 
-export const CorrectBadge = styled.div`
-  background: #52c41a;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
+export const HistoryList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${space.sm};
+`
+
+export const HistoryItem = styled.div`
+  padding: 12px 14px;
+  border-radius: ${radius.sm};
+  background: ${color.surfaceAlt};
+  border: 1px solid ${color.line};
+`
+
+export const HistoryDate = styled.div`
+  font-size: ${text.micro};
+  color: ${color.inkFaint};
+  margin-bottom: 4px;
+`
+
+export const HistoryText = styled.div`
+  font-size: ${text.small};
+  color: ${color.inkBody};
 `

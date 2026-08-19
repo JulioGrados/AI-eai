@@ -1,10 +1,11 @@
 import styled from 'styled-components'
+import { color } from '../../styles/theme'
 
 export const PrivateMiddle = styled.div`
-  margin: 0;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  -ms-transform: translate(-50%, -50%);
-  transform: translate(-50%, -50%);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${color.bg};
 `

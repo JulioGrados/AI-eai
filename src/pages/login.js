@@ -1,24 +1,23 @@
-import { Fixed } from '../layouts'
-import { Login } from '../views/auth/containers/login'
 import Head from 'next/head'
 import { useEffect } from 'react'
-
-import Router from 'next/router'
 import { session } from 'utils'
 
+import { Login } from '../views/auth/containers/login'
+
 const LoginPage = () => {
+  // Al llegar al login la sesión previa se descarta
   useEffect(() => {
     session.removeCookie('jwt')
     session.removeCookie('user')
-    Router.push('/login')
   }, [])
+
   return (
-    <Fixed>
+    <>
       <Head>
-        <title>Login - Cursos AI</title>
+        <title>Ingresar - Cursos IA</title>
       </Head>
       <Login />
-    </Fixed>
+    </>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import {
@@ -16,8 +16,12 @@ export const useChapters = ({ module, chapterId } = {}) => {
   )
   const dispatch = useDispatch()
 
+  // Marca que la consulta de ESTE capítulo ya terminó: hasta entonces el
+  // estado todavía puede tener el capítulo anterior
+  const [ready, setReady] = useState(!chapterId)
+
   useEffect(() => {
-    if (loading === false && module) {
+    if (module) {
       dispatch(
         getChapters({
           query: { lesson: module }
@@ -27,8 +31,22 @@ export const useChapters = ({ module, chapterId } = {}) => {
   }, [module])
 
   useEffect(() => {
-    if (chapterId && !loading) {
-      dispatch(getChapter(chapterId))
+    if (!chapterId) {
+      setReady(true)
+      return
+    }
+
+    let alive = true
+    setReady(false)
+
+    Promise.resolve(dispatch(getChapter(chapterId))).then(() => {
+      if (alive) {
+        setReady(true)
+      }
+    })
+
+    return () => {
+      alive = false
     }
   }, [chapterId])
 
@@ -59,6 +77,7 @@ export const useChapters = ({ module, chapterId } = {}) => {
     chapters,
     chapter,
     loading,
+    ready,
     update,
     create,
     error,

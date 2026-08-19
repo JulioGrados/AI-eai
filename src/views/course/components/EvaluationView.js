@@ -1,45 +1,84 @@
 import React, { useState, useEffect } from 'react'
 import { Icon, message } from 'antd'
 import Router from 'next/router'
+
 import { useEvaluations, useEvaluationVersions } from '../../../hooks'
 import {
+  PageHead,
+  InlineTitleInput,
+  SectionTitle,
+  PrimaryButton,
+  GhostButton,
+  Chip,
+  OrderBadge,
+  EmptyState,
+  LoadingState
+} from '../../../components/ui'
+import {
   EvaluationContainer,
-  EvaluationHeader,
-  BackButton,
-  ModuleTitleInput,
   ContentWrapper,
   LeftPanel,
-  GenerateSection,
-  GenerateButton,
-  PromptInput,
   VersionList,
   VersionItem,
-  VersionNumber,
   VersionInfo,
+  VersionNumber,
   VersionDate,
   FavoriteIcon,
   RightPanel,
-  PromptDisplay,
-  PromptLabel,
-  ContentText,
   QuestionsList,
   QuestionCard,
   QuestionHeader,
-  QuestionNumber,
   QuestionText,
   OptionsList,
   OptionItem,
   OptionLabel,
   OptionText,
-  OptionInput,
-  QuestionInput,
-  SaveButton,
-  CorrectBadge
+  CorrectBadge,
+  ContentText,
+  ComposerCard,
+  ComposerHeader,
+  PromptInput,
+  ComposerActions,
+  HistoryList,
+  HistoryItem,
+  HistoryDate,
+  HistoryText
 } from '../styles/evaluation.styd'
 
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleString('es-PE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    : 'Sin fecha'
+
+/* Las opciones llegan planas (una fila por alternativa); aquí se agrupan por pregunta */
+const groupByQuestion = (options = []) => {
+  const grouped = []
+
+  options.forEach(option => {
+    let entry = grouped.find(item => item.question === option.question)
+    if (!entry) {
+      entry = { question: option.question, options: [] }
+      grouped.push(entry)
+    }
+    entry.options.push({
+      id: option.id,
+      text: option.text,
+      isCorrect: option.isCorrect
+    })
+  })
+
+  return grouped
+}
+
 export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading }) => {
-  const { get: getExam, create: createExam } = useEvaluations()
-  const { create: createVersion, setFavorite, editContent, update: updateVersion } = useEvaluationVersions()
+  const { get: getExam, create: createExam, update: updateExam } = useEvaluations()
+  const { create: createVersion, setFavorite, editContent } = useEvaluationVersions()
 
   const [moduleTitle, setModuleTitle] = useState('')
   const [editPrompt, setEditPrompt] = useState('')
@@ -47,8 +86,6 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
   const [isEditing, setIsEditing] = useState(false)
   const [shouldSelectNewest, setShouldSelectNewest] = useState(false)
   const [isCreatingExam, setIsCreatingExam] = useState(false)
-  const [editableQuestions, setEditableQuestions] = useState({})
-  const [isSaving, setIsSaving] = useState(false)
 
   const versions = exam?.versions || []
   const favoriteVersion = exam?.favoriteVersion
@@ -75,114 +112,34 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
   }, [exam, shouldSelectNewest])
 
   const activeVersion = versions.find(v => v._id === activeVersionId)
-
-  // Inicializar preguntas editables cuando cambia la versión activa
-  useEffect(() => {
-    if (activeVersion && activeVersion.options) {
-      const questionsData = {}
-      activeVersion.options.forEach(option => {
-        if (!questionsData[option.question]) {
-          questionsData[option.question] = {
-            question: option.question,
-            options: []
-          }
-        }
-        questionsData[option.question].options.push({
-          id: option.id,
-          text: option.text,
-          isCorrect: option.isCorrect
-        })
-      })
-      setEditableQuestions(questionsData)
-    }
-  }, [activeVersion])
-
-  // Manejar cambio en el texto de la pregunta
-  const handleQuestionChange = (oldQuestion, newQuestion) => {
-    setEditableQuestions(prev => {
-      const updated = { ...prev }
-      if (updated[oldQuestion]) {
-        updated[newQuestion] = { ...updated[oldQuestion], question: newQuestion }
-        if (oldQuestion !== newQuestion) {
-          delete updated[oldQuestion]
-        }
-      }
-      return updated
-    })
-  }
-
-  // Manejar cambio en el texto de una opción
-  const handleOptionTextChange = (question, optionId, newText) => {
-    setEditableQuestions(prev => {
-      const updated = { ...prev }
-      if (updated[question]) {
-        updated[question].options = updated[question].options.map(opt =>
-          opt.id === optionId ? { ...opt, text: newText } : opt
-        )
-      }
-      return updated
-    })
-  }
-
-  // Manejar cambio de respuesta correcta
-  const handleCorrectChange = (question, optionId) => {
-    setEditableQuestions(prev => {
-      const updated = { ...prev }
-      if (updated[question]) {
-        updated[question].options = updated[question].options.map(opt => ({
-          ...opt,
-          isCorrect: opt.id === optionId
-        }))
-      }
-      return updated
-    })
-  }
-
-  // Guardar cambios en la versión
-  const handleSaveChanges = async () => {
-    if (!activeVersionId) return
-
-    setIsSaving(true)
-    message.loading('Guardando cambios...', 0)
-
-    try {
-      // Convertir questionsData de vuelta a array de opciones
-      const updatedOptions = []
-      Object.values(editableQuestions).forEach(({ question, options }) => {
-        options.forEach(option => {
-          updatedOptions.push({
-            question,
-            id: option.id,
-            text: option.text,
-            isCorrect: option.isCorrect
-          })
-        })
-      })
-
-      await updateVersion(activeVersionId, { options: updatedOptions })
-
-      message.destroy()
-      message.success('Cambios guardados exitosamente')
-
-      // Recargar el exam
-      if (exam._id) {
-        await getExam(exam._id)
-      }
-    } catch (error) {
-      console.error('Error al guardar cambios:', error)
-      message.destroy()
-      message.error('Error al guardar los cambios')
-    } finally {
-      setIsSaving(false)
-    }
-  }
+  const questions = activeVersion ? groupByQuestion(activeVersion.options) : []
 
   const handleBack = () => {
     Router.push(`/cursos/${courseId}`)
   }
 
+  // El título se guarda al salir del campo, solo si realmente cambió
+  const handleTitleBlur = async () => {
+    const name = moduleTitle.trim()
+    if (!exam?._id || !name || name === exam.name) return
+
+    try {
+      await updateExam(exam._id, { name })
+      message.success('Título actualizado')
+    } catch (error) {
+      console.error('Error actualizando título:', error)
+      message.error('No se pudo actualizar el título')
+      setModuleTitle(exam.name || '')
+    }
+  }
+
   // Generar nueva versión SIN prompt manual (auto-generado)
   const handleGenerateVersion = async () => {
+    if (!moduleId) {
+      message.error('No se pudo identificar el módulo')
+      return
+    }
+
     let currentExam = exam
     let currentVersionsLength = versions.length
 
@@ -205,8 +162,6 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
         currentExam = createdExam
         currentVersionsLength = 0
         setIsCreatingExam(false)
-
-        console.log('Exam creado:', currentExam)
       }
 
       // Generar nueva versión (siempre, tenga o no tenga versiones previas)
@@ -220,7 +175,6 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
         name: `Versión ${currentVersionsLength + 1}`
       }
 
-      console.log('Creando versión con data:', versionData)
       await createVersion(versionData)
 
       message.destroy()
@@ -255,7 +209,7 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
     message.loading('Editando evaluación con IA, esto puede tardar algunos minutos...', 0)
 
     try {
-      await editContent(activeVersionId, {editPrompt: editPrompt})
+      await editContent(activeVersionId, { editPrompt: editPrompt })
       message.destroy()
       message.success('¡Evaluación editada exitosamente!')
       await getExam(exam._id)
@@ -286,99 +240,96 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
   if (examLoading) {
     return (
       <EvaluationContainer>
-        <div style={{ padding: '40px', textAlign: 'center' }}>
-          <Icon type="loading" style={{ fontSize: '32px' }} />
-          <div style={{ marginTop: '16px' }}>Cargando evaluación...</div>
-        </div>
+        <LoadingState text='Cargando evaluación...' />
       </EvaluationContainer>
     )
   }
 
+  const isBusy = isGenerating || isCreatingExam
+
+  const generateButton = (
+    <PrimaryButton onClick={handleGenerateVersion} disabled={isBusy}>
+      <Icon type={isBusy ? 'loading' : 'thunderbolt'} />
+      {isGenerating ? 'Generando...' : isCreatingExam ? 'Creando...' : 'Generar versión'}
+    </PrimaryButton>
+  )
+
   return (
     <EvaluationContainer>
-      <EvaluationHeader>
-        <BackButton onClick={handleBack}>
-          <Icon type="arrow-left" />
-        </BackButton>
-        <ModuleTitleInput
+      <PageHead
+        onBack={handleBack}
+        subtitle={
+          questions.length
+            ? `${questions.length} ${questions.length === 1 ? 'pregunta' : 'preguntas'} · ${versions.length} ${versions.length === 1 ? 'versión' : 'versiones'}`
+            : 'Genera la evaluación del módulo con IA'
+        }
+        actions={generateButton}
+      >
+        <InlineTitleInput
           value={moduleTitle}
           onChange={(e) => setModuleTitle(e.target.value)}
-          placeholder="Título de la evaluación"
+          onBlur={handleTitleBlur}
+          placeholder='Título de la evaluación'
         />
-      </EvaluationHeader>
+      </PageHead>
 
       <ContentWrapper>
         <LeftPanel>
-          <GenerateSection>
-            <GenerateButton
-              onClick={handleGenerateVersion}
-              disabled={isGenerating || isCreatingExam}
-            >
-              <Icon type={isGenerating || isCreatingExam ? "loading" : "thunderbolt"} />
-              {isGenerating ? 'Generando...' : isCreatingExam ? 'Creando...' : 'Generar'}
-            </GenerateButton>
-          </GenerateSection>
+          <SectionTitle style={{ margin: 0 }}>Versiones</SectionTitle>
 
-          <VersionList>
-            {versions.map((version) => {
-              const isFavorite = favoriteVersion?._id === version._id
-              return (
-                <VersionItem
-                  key={version._id}
-                  isActive={version._id === activeVersionId}
-                  onClick={() => setActiveVersionId(version._id)}
-                >
-                  <VersionInfo>
-                    <VersionNumber>Versión {version.versionNumber}</VersionNumber>
-                    <VersionDate>
-                      {new Date(version.createdAt).toLocaleString('es-PE', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </VersionDate>
-                  </VersionInfo>
-                  <FavoriteIcon
-                    isFavorite={isFavorite}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleFavorite(version._id)
-                    }}
+          {versions.length === 0 ? (
+            <VersionDate>Todavía no hay versiones.</VersionDate>
+          ) : (
+            <VersionList>
+              {versions.map((version) => {
+                const isFavorite = favoriteVersion?._id === version._id
+                const isActive = version._id === activeVersionId
+
+                return (
+                  <VersionItem
+                    key={version._id}
+                    $active={isActive}
+                    onClick={() => setActiveVersionId(version._id)}
                   >
-                    <Icon type={isFavorite ? "star" : "star"} theme={isFavorite ? "filled" : "outlined"} />
-                  </FavoriteIcon>
-                </VersionItem>
-              )
-            })}
-          </VersionList>
+                    <VersionInfo>
+                      <VersionNumber $active={isActive}>
+                        Versión {version.versionNumber}
+                      </VersionNumber>
+                      <VersionDate>{formatDate(version.createdAt)}</VersionDate>
+                    </VersionInfo>
+                    <FavoriteIcon
+                      $favorite={isFavorite}
+                      title={isFavorite ? 'Versión favorita' : 'Marcar como favorita'}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(version._id)
+                      }}
+                    >
+                      <Icon type='star' theme={isFavorite ? 'filled' : 'outlined'} />
+                    </FavoriteIcon>
+                  </VersionItem>
+                )
+              })}
+            </VersionList>
+          )}
         </LeftPanel>
 
         <RightPanel>
           {activeVersion ? (
             <>
-              {/* <PromptDisplay>
-                <PromptLabel>Prompt generado automáticamente:</PromptLabel>
-                {activeVersion.prompt}
-              </PromptDisplay> */}
-
-              {Object.keys(editableQuestions).length > 0 ? (
+              {questions.length > 0 ? (
                 <QuestionsList>
-                  {Object.entries(editableQuestions).map(([question, data], index) => (
+                  {questions.map((item, index) => (
                     <QuestionCard key={index}>
                       <QuestionHeader>
-                        <QuestionNumber>{index + 1}</QuestionNumber>
-                        <QuestionText>{data.question}</QuestionText>
+                        <OrderBadge>{index + 1}</OrderBadge>
+                        <QuestionText>{item.question}</QuestionText>
                       </QuestionHeader>
                       <OptionsList>
-                        {data.options.map((option) => (
-                          <OptionItem
-                            key={option.id}
-                            isCorrect={option.isCorrect}
-                          >
-                            <OptionLabel isCorrect={option.isCorrect}>
-                              {option.id.toUpperCase()}
+                        {item.options.map((option) => (
+                          <OptionItem key={option.id} $correct={option.isCorrect}>
+                            <OptionLabel $correct={option.isCorrect}>
+                              {(option.id || '').toString().toUpperCase()}
                             </OptionLabel>
                             <OptionText>{option.text}</OptionText>
                             {option.isCorrect && <CorrectBadge>Correcta</CorrectBadge>}
@@ -389,50 +340,62 @@ export const EvaluationView = ({ courseId, moduleId, exam, loading: examLoading 
                   ))}
                 </QuestionsList>
               ) : (
-                <ContentText>{activeVersion?.content || 'Sin contenido generado'}</ContentText>
+                <ContentText>{activeVersion.content || 'Sin contenido generado'}</ContentText>
               )}
 
               {activeVersion.edits && activeVersion.edits.length > 0 && (
-                <div style={{ marginTop: '24px' }}>
-                  <PromptLabel>Historial de ediciones:</PromptLabel>
-                  {activeVersion.edits.map((edit, index) => (
-                    <div key={index} style={{
-                      padding: '12px',
-                      background: '#f5f5f5',
-                      borderRadius: '4px',
-                      marginTop: '8px'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>
-                        {new Date(edit.timestamp).toLocaleString('es-PE')}
-                      </div>
-                      <div>{edit.editPrompt}</div>
-                    </div>
-                  ))}
-                </div>
+                <ComposerCard>
+                  <ComposerHeader>
+                    <Icon type='history' />
+                    Historial de ediciones
+                    <Chip>{activeVersion.edits.length}</Chip>
+                  </ComposerHeader>
+                  <HistoryList>
+                    {activeVersion.edits.map((edit, index) => (
+                      <HistoryItem key={index}>
+                        <HistoryDate>{formatDate(edit.timestamp)}</HistoryDate>
+                        <HistoryText>{edit.editPrompt}</HistoryText>
+                      </HistoryItem>
+                    ))}
+                  </HistoryList>
+                </ComposerCard>
               )}
 
-              <GenerateSection style={{ marginTop: '24px' }}>
+              <ComposerCard>
+                <ComposerHeader>
+                  <Icon type='edit' />
+                  Editar con IA
+                </ComposerHeader>
                 <PromptInput
                   value={editPrompt}
                   onChange={(e) => setEditPrompt(e.target.value)}
-                  placeholder="Escribe las instrucciones para editar esta evaluación..."
+                  placeholder='Por ejem. "Haz las preguntas más aplicadas y agrega dos casos prácticos".'
                   disabled={isEditing}
                 />
-                <GenerateButton
-                  onClick={handleEditVersion}
-                  disabled={isEditing || !editPrompt.trim()}
-                >
-                  <Icon type={isEditing ? "loading" : "edit"} />
-                  {isEditing ? 'Editando...' : 'Editar Contenido'}
-                </GenerateButton>
-              </GenerateSection>
+                <ComposerActions>
+                  <GhostButton
+                    onClick={handleEditVersion}
+                    disabled={isEditing || !editPrompt.trim()}
+                  >
+                    <Icon type={isEditing ? 'loading' : 'edit'} />
+                    {isEditing ? 'Editando...' : 'Aplicar cambios'}
+                  </GhostButton>
+                </ComposerActions>
+              </ComposerCard>
             </>
           ) : (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
-              {versions.length === 0
-                ? 'Haz clic en "Generar" para crear la primera versión de la evaluación'
-                : 'Selecciona una versión para ver su contenido'}
-            </div>
+            <QuestionCard>
+              <EmptyState
+                icon='file-text'
+                title={versions.length === 0 ? 'Sin evaluación todavía' : 'Selecciona una versión'}
+                text={
+                  versions.length === 0
+                    ? 'Genera la primera versión y la IA creará las preguntas a partir del contenido del módulo.'
+                    : 'Elige una versión de la izquierda para ver sus preguntas.'
+                }
+                action={versions.length === 0 ? generateButton : null}
+              />
+            </QuestionCard>
           )}
         </RightPanel>
       </ContentWrapper>

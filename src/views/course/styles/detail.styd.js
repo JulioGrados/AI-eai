@@ -1,104 +1,186 @@
 import styled from 'styled-components'
+import {
+  color,
+  radius,
+  shadow,
+  space,
+  text,
+  transition
+} from '../../../styles/theme'
 
 export const CourseDetailContainer = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 `
 
-export const CourseHeader = styled.div`
+export const ModuleList = styled.div`
   display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
+  flex-direction: column;
+  gap: ${space.md};
 `
 
-export const BackButton = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 1px solid #d9d9d9;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+export const ModuleCard = styled.div`
+  background: ${color.surface};
+  border: 1px solid ${props => props.$open ? color.brandTintStrong : color.line};
+  border-radius: ${radius.md};
+  overflow: hidden;
+  transition: border-color ${transition.fast}, box-shadow ${transition.fast};
+
   &:hover {
-    background-color: #f5f5f5;
+    border-color: ${props => props.$open ? color.brandTintStrong : color.lineStrong};
   }
-`
-
-export const CourseTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-  flex: 1;
-`
-
-export const ModuleContainer = styled.div`
-  margin-bottom: 16px;
 `
 
 export const ModuleHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: #fafafa;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
+  gap: ${space.md};
+  padding: 14px 16px;
   cursor: pointer;
+  background: ${props => props.$open ? color.surfaceAlt : color.surface};
+  border-bottom: 1px solid ${props => props.$open ? color.line : 'transparent'};
+  transition: background ${transition.fast};
+
   &:hover {
-    background: #f0f0f0;
+    background: ${color.surfaceAlt};
   }
 `
 
-export const ModuleTitle = styled.span`
-  flex: 1;
-  font-weight: 500;
-  font-size: 15px;
+export const Chevron = styled.span`
+  color: ${color.inkFaint};
+  font-size: 11px;
+  flex: none;
+  display: flex;
+  transition: transform ${transition.base};
+  transform: rotate(${props => props.$open ? '90deg' : '0deg'});
 `
 
-export const ModuleInfo = styled.span`
-  color: #8c8c8c;
-  font-size: 14px;
+export const DragHandle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  color: ${color.inkFaint};
+  cursor: grab;
+  border-radius: ${radius.sm};
+  touch-action: none;
+  transition: all ${transition.fast};
+
+  &:hover {
+    background: ${color.surfaceSunken};
+    color: ${color.inkMuted};
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+`
+
+export const ModuleName = styled.span`
+  font-size: ${text.body};
+  font-weight: 600;
+  color: ${color.ink};
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
+export const ModuleSpacer = styled.div`
+  flex: 1;
+`
+
+export const ModuleActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+`
+
+export const ModuleBody = styled.div`
+  padding: 6px 16px 12px 58px;
 `
 
 export const ChapterList = styled.div`
-  padding-left: 40px;
-  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
 `
 
 export const ChapterItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid #f0f0f0;
-  &:hover {
-    background: #fafafa;
+  gap: ${space.md};
+  padding: 11px 10px;
+  border-radius: ${radius.sm};
+  transition: background ${transition.fast};
+
+  & + & {
+    border-top: 1px solid ${color.line};
   }
+
+  &:hover {
+    background: ${color.surfaceAlt};
+  }
+`
+
+export const ChapterDot = styled.span`
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: ${props => props.$done ? color.brand : color.lineStrong};
 `
 
 export const ChapterTitle = styled.span`
   flex: 1;
-  font-size: 14px;
+  min-width: 0;
+  font-size: ${text.small};
+  color: ${color.inkBody};
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color ${transition.fast};
+
   &:hover {
-    color: #1890ff;
+    color: ${color.brand};
   }
 `
 
 export const ChapterWordCount = styled.span`
-  color: #8c8c8c;
-  font-size: 13px;
+  font-size: ${text.tiny};
+  color: ${color.inkFaint};
+  white-space: nowrap;
+  flex: none;
 `
 
-export const ActionIcon = styled.span`
+export const EvaluationList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${space.md};
+`
+
+export const EvaluationRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${space.md};
+  padding: 16px;
+  background: ${color.surface};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.md};
   cursor: pointer;
-  color: #8c8c8c;
-  font-size: 16px;
+  transition: all ${transition.fast};
+
   &:hover {
-    color: #1890ff;
+    border-color: ${color.brandTintStrong};
+    box-shadow: ${shadow.sm};
   }
+`
+
+export const EvaluationName = styled.span`
+  font-size: ${text.body};
+  font-weight: 500;
+  color: ${color.ink};
 `

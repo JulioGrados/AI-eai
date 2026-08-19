@@ -15,8 +15,11 @@ export const useModules = ({ course } = {}) => {
   )
   const dispatch = useDispatch()
 
+  // Se recarga siempre que cambia el curso. El `loading === false` anterior
+  // podía saltarse la consulta si coincidía con otra petición en curso,
+  // dejando en pantalla los módulos del curso anterior
   useEffect(() => {
-    if (loading === false && course) {
+    if (course) {
       dispatch(
         getModules({
           query: { 'course.ref': course },

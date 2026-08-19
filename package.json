@@ -40,5 +40,13 @@
   "devDependencies": {
     "babel-plugin-styled-components": "^1.11.1",
     "standard": "^14.3.4"
+  },
+  "standard": {
+    "env": [
+      "browser"
+    ],
+    "globals": [
+      "React"
+    ]
   }
 }

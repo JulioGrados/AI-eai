@@ -2,32 +2,54 @@ import React, { useState, useEffect } from 'react'
 import { Icon, message } from 'antd'
 import Router from 'next/router'
 import ReactMarkdown from 'react-markdown'
+
 import { useChapterVersions, useChapters } from '../../../hooks'
 import {
+  PageHead,
+  InlineTitleInput,
+  SectionTitle,
+  PrimaryButton,
+  GhostButton,
+  Chip,
+  EmptyState
+} from '../../../components/ui'
+import {
   ChapterContainer,
-  ChapterHeader,
-  BackButton,
-  ChapterTitleInput,
   ContentWrapper,
   LeftPanel,
-  GenerateSection,
-  GenerateButton,
-  PromptInput,
   VersionList,
   VersionItem,
-  VersionNumber,
   VersionInfo,
+  VersionNumber,
   VersionDate,
   FavoriteIcon,
   RightPanel,
-  ContentText,
-  PromptDisplay,
-  PromptLabel
+  ReaderCard,
+  ComposerCard,
+  ComposerHeader,
+  PromptInput,
+  ComposerActions,
+  HistoryList,
+  HistoryItem,
+  HistoryDate,
+  HistoryText,
+  ContentText
 } from '../styles/chapter.styd'
+
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleString('es-PE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    : 'Sin fecha'
 
 export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
   const { create: createVersion, setFavorite, editContent } = useChapterVersions()
-  const { get: getChapter } = useChapters()
+  const { get: getChapter, update: updateChapter } = useChapters()
   const [chapterTitle, setChapterTitle] = useState(chapter?.name || 'Capítulo sin título')
   const [editPrompt, setEditPrompt] = useState('')
 
@@ -67,6 +89,21 @@ export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
 
   const handleBack = () => {
     Router.push(`/cursos/${courseId}`)
+  }
+
+  // El título se guarda al salir del campo, solo si realmente cambió
+  const handleTitleBlur = async () => {
+    const name = chapterTitle.trim()
+    if (!chapter?._id || !name || name === chapter.name) return
+
+    try {
+      await updateChapter(chapter._id, { name })
+      message.success('Título actualizado')
+    } catch (error) {
+      console.error('Error actualizando título:', error)
+      message.error('No se pudo actualizar el título')
+      setChapterTitle(chapter.name || '')
+    }
   }
 
   const handleGenerateVersion = async () => {
@@ -163,113 +200,135 @@ export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
     }
   }
 
+  // Mientras carga no se conoce el capítulo real: generar ahí crearía la
+  // versión sobre datos incompletos
+  const generateButton = (
+    <PrimaryButton onClick={handleGenerateVersion} disabled={isGenerating || loading}>
+      <Icon type={isGenerating ? 'loading' : 'thunderbolt'} />
+      {isGenerating ? 'Generando...' : 'Generar versión'}
+    </PrimaryButton>
+  )
+
   return (
     <ChapterContainer>
-      <ChapterHeader>
-        <BackButton onClick={handleBack}>
-          <Icon type="arrow-left" />
-        </BackButton>
-        <ChapterTitleInput
+      <PageHead
+        onBack={handleBack}
+        subtitle={`${versions.length} ${versions.length === 1 ? 'versión generada' : 'versiones generadas'}`}
+        actions={generateButton}
+      >
+        <InlineTitleInput
           value={chapterTitle}
           onChange={(e) => setChapterTitle(e.target.value)}
-          placeholder="Título del capítulo"
+          onBlur={handleTitleBlur}
+          placeholder='Título del capítulo'
         />
-      </ChapterHeader>
+      </PageHead>
 
       <ContentWrapper>
         <LeftPanel>
-          <GenerateSection>
-            <GenerateButton
-              onClick={handleGenerateVersion}
-              disabled={isGenerating}
-            >
-              <Icon type={isGenerating ? "loading" : "thunderbolt"} />
-              {isGenerating ? 'Generando...' : 'Generar'}
-            </GenerateButton>
-          </GenerateSection>
+          <SectionTitle style={{ margin: 0 }}>Versiones</SectionTitle>
 
-          <VersionList>
-            {versions.map((version) => {
-              const isFavorite = favoriteVersion?._id === version._id
-              const formattedDate = version.createdAt
-                ? new Date(version.createdAt).toLocaleString('es-PE', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
-                : 'Sin fecha'
+          {versions.length === 0 ? (
+            <VersionDate>
+              {loading ? 'Cargando versiones...' : 'Todavía no hay versiones.'}
+            </VersionDate>
+          ) : (
+            <VersionList>
+              {versions.map((version) => {
+                const isFavorite = favoriteVersion?._id === version._id
+                const isActive = version._id === activeVersionId
 
-              return (
-                <VersionItem
-                  key={version._id}
-                  isActive={version._id === activeVersionId}
-                  onClick={() => setActiveVersionId(version._id)}
-                >
-                  <VersionInfo>
-                    <VersionNumber>Versión {version.versionNumber}</VersionNumber>
-                    <VersionDate>{formattedDate}</VersionDate>
-                  </VersionInfo>
-                  <FavoriteIcon
-                    isFavorite={isFavorite}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleFavorite(version._id)
-                    }}
+                return (
+                  <VersionItem
+                    key={version._id}
+                    $active={isActive}
+                    onClick={() => setActiveVersionId(version._id)}
                   >
-                    <Icon type={isFavorite ? "star" : "star"} theme={isFavorite ? "filled" : "outlined"} />
-                  </FavoriteIcon>
-                </VersionItem>
-              )
-            })}
-          </VersionList>
+                    <VersionInfo>
+                      <VersionNumber $active={isActive}>
+                        Versión {version.versionNumber}
+                      </VersionNumber>
+                      <VersionDate>{formatDate(version.createdAt)}</VersionDate>
+                    </VersionInfo>
+                    <FavoriteIcon
+                      $favorite={isFavorite}
+                      title={isFavorite ? 'Versión favorita' : 'Marcar como favorita'}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(version._id)
+                      }}
+                    >
+                      <Icon type='star' theme={isFavorite ? 'filled' : 'outlined'} />
+                    </FavoriteIcon>
+                  </VersionItem>
+                )
+              })}
+            </VersionList>
+          )}
         </LeftPanel>
 
         <RightPanel>
-          {activeVersion && (
+          {activeVersion ? (
             <>
-              {/* <PromptDisplay>
-                <PromptLabel>Prompt considerado:</PromptLabel>
-                {activeVersion.prompt}
-              </PromptDisplay> */}
-              <ContentText>
-                <ReactMarkdown>{activeVersion.content}</ReactMarkdown>
-              </ContentText>
+              <ReaderCard>
+                <ContentText>
+                  <ReactMarkdown>{activeVersion.content}</ReactMarkdown>
+                </ContentText>
+              </ReaderCard>
 
-              {/* Historial de ediciones */}
               {activeVersion.edits && activeVersion.edits.length > 0 && (
-                <div style={{ marginTop: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
-                  <PromptLabel>Historial de ediciones:</PromptLabel>
-                  {activeVersion.edits.map((edit, index) => (
-                    <div key={index} style={{ marginTop: '10px', padding: '10px', background: 'white', borderRadius: '4px' }}>
-                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '5px' }}>
-                        {new Date(edit.timestamp).toLocaleString('es-PE')}
-                      </div>
-                      <div style={{ fontSize: '14px' }}>{edit.editPrompt}</div>
-                    </div>
-                  ))}
-                </div>
+                <ComposerCard>
+                  <ComposerHeader>
+                    <Icon type='history' />
+                    Historial de ediciones
+                    <Chip>{activeVersion.edits.length}</Chip>
+                  </ComposerHeader>
+                  <HistoryList>
+                    {activeVersion.edits.map((edit, index) => (
+                      <HistoryItem key={index}>
+                        <HistoryDate>{formatDate(edit.timestamp)}</HistoryDate>
+                        <HistoryText>{edit.editPrompt}</HistoryText>
+                      </HistoryItem>
+                    ))}
+                  </HistoryList>
+                </ComposerCard>
               )}
 
-              {/* Sección de edición */}
-              <GenerateSection style={{ marginTop: '20px' }}>
+              <ComposerCard>
+                <ComposerHeader>
+                  <Icon type='edit' />
+                  Editar con IA
+                </ComposerHeader>
                 <PromptInput
                   value={editPrompt}
                   onChange={(e) => setEditPrompt(e.target.value)}
-                  placeholder="Escribe las instrucciones para editar esta versión..."
+                  placeholder='Por ejem. "Agrega un ejemplo práctico al final y simplifica la introducción".'
                   disabled={isEditing}
-                  style={{ marginBottom: '10px' }}
                 />
-                <GenerateButton
-                  onClick={handleEditVersion}
-                  disabled={isEditing || !editPrompt.trim()}
-                >
-                  <Icon type={isEditing ? "loading" : "edit"} />
-                  {isEditing ? 'Editando...' : 'Editar Contenido'}
-                </GenerateButton>
-              </GenerateSection>
+                <ComposerActions>
+                  <GhostButton
+                    onClick={handleEditVersion}
+                    disabled={isEditing || !editPrompt.trim()}
+                  >
+                    <Icon type={isEditing ? 'loading' : 'edit'} />
+                    {isEditing ? 'Editando...' : 'Aplicar cambios'}
+                  </GhostButton>
+                </ComposerActions>
+              </ComposerCard>
             </>
+          ) : (
+            <ReaderCard>
+              <EmptyState
+                icon='thunderbolt'
+                title={versions.length === 0 ? 'Sin contenido todavía' : 'Selecciona una versión'}
+                text={
+                  versions.length === 0
+                    ? 'Genera la primera versión del capítulo y aparecerá aquí para revisarla y editarla.'
+                    : 'Elige una versión de la izquierda para ver su contenido.'
+                }
+                action={versions.length === 0 ? generateButton : null}
+              />
+            </ReaderCard>
           )}
         </RightPanel>
       </ContentWrapper>
