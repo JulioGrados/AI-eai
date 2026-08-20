@@ -358,3 +358,81 @@ export const ContentText = styled.div`
     margin-bottom: 0;
   }
 `
+
+/* ---------------------------------------------------------------- */
+/* Lectura vs. Markdown                                              */
+/* ---------------------------------------------------------------- */
+
+export const ReaderToolbar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${space.md};
+  flex-wrap: wrap;
+  margin: 0 0 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${color.line};
+`
+
+export const ViewToggle = styled.div`
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: ${color.surfaceSunken};
+  border-radius: ${radius.sm};
+`
+
+export const ViewToggleButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: ${text.small};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all ${transition.fast};
+  background: ${props => props.$active ? color.surface : 'transparent'};
+  color: ${props => props.$active ? color.brand : color.inkMuted};
+  box-shadow: ${props => props.$active ? shadow.xs : 'none'};
+
+  &:hover {
+    color: ${props => props.$active ? color.brand : color.inkStrong};
+  }
+
+  &:focus {
+    outline: none;
+  }
+`
+
+export const ToolbarActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${space.sm};
+`
+
+/* El Markdown crudo: se muestra tal cual está guardado, listo para copiar */
+export const MarkdownSource = styled.pre`
+  margin: 0;
+  padding: 20px 22px;
+  max-height: 70vh;
+  overflow: auto;
+  background: ${color.surfaceAlt};
+  border: 1px solid ${color.line};
+  border-radius: ${radius.md};
+  font-family: ${font.mono};
+  font-size: 13px;
+  line-height: 1.7;
+  color: ${color.inkBody};
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  tab-size: 2;
+
+  ${media.sm} {
+    padding: 16px;
+    font-size: 12px;
+  }
+`

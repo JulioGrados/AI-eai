@@ -33,7 +33,12 @@ import {
   HistoryItem,
   HistoryDate,
   HistoryText,
-  ContentText
+  ContentText,
+  ReaderToolbar,
+  ViewToggle,
+  ViewToggleButton,
+  ToolbarActions,
+  MarkdownSource
 } from '../styles/chapter.styd'
 
 const formatDate = (value) =>
@@ -62,6 +67,9 @@ export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
     favoriteVersion?._id || versions[0]?._id || null
   )
   const [isGenerating, setIsGenerating] = useState(false)
+  // 'preview' = renderizado para leer | 'markdown' = el texto crudo para copiar
+  const [viewMode, setViewMode] = useState('preview')
+  const [copied, setCopied] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [shouldSelectNewest, setShouldSelectNewest] = useState(false)
 
@@ -85,7 +93,46 @@ export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
     }
   }, [chapter, shouldSelectNewest])
 
+  useEffect(() => {
+    if (!copied) return
+    const timer = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timer)
+  }, [copied])
+
   const activeVersion = versions.find(v => v._id === activeVersionId)
+
+  // Copia el Markdown tal cual está guardado, para pegarlo en otra plataforma
+  const handleCopyMarkdown = async () => {
+    const content = activeVersion?.content || ''
+    if (!content) {
+      message.warning('Esta versión no tiene contenido para copiar')
+      return
+    }
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content)
+      } else {
+        // Sin HTTPS el portapapeles moderno no está disponible
+        const helper = document.createElement('textarea')
+        helper.value = content
+        helper.style.position = 'fixed'
+        helper.style.top = '-1000px'
+        helper.style.opacity = '0'
+        document.body.appendChild(helper)
+        helper.select()
+        document.execCommand('copy')
+        document.body.removeChild(helper)
+      }
+
+      setCopied(true)
+      message.success('Markdown copiado al portapapeles')
+    } catch (error) {
+      console.error('Error copiando el markdown:', error)
+      message.error('No se pudo copiar. Abre la vista Markdown y cópialo a mano.')
+      setViewMode('markdown')
+    }
+  }
 
   const handleBack = () => {
     Router.push(`/cursos/${courseId}`)
@@ -271,9 +318,42 @@ export const ChapterView = ({ courseId, chapterId, chapter, loading }) => {
           {activeVersion ? (
             <>
               <ReaderCard>
-                <ContentText>
-                  <ReactMarkdown>{activeVersion.content}</ReactMarkdown>
-                </ContentText>
+                <ReaderToolbar>
+                  <ViewToggle>
+                    <ViewToggleButton
+                      $active={viewMode === 'preview'}
+                      onClick={() => setViewMode('preview')}
+                    >
+                      <Icon type='read' />
+                      Vista
+                    </ViewToggleButton>
+                    <ViewToggleButton
+                      $active={viewMode === 'markdown'}
+                      onClick={() => setViewMode('markdown')}
+                    >
+                      <Icon type='code' />
+                      Markdown
+                    </ViewToggleButton>
+                  </ViewToggle>
+
+                  <ToolbarActions>
+                    {activeVersion.wordCount > 0 && (
+                      <Chip>{activeVersion.wordCount.toLocaleString('es-PE')} palabras</Chip>
+                    )}
+                    <GhostButton onClick={handleCopyMarkdown}>
+                      <Icon type={copied ? 'check' : 'copy'} />
+                      {copied ? 'Copiado' : 'Copiar Markdown'}
+                    </GhostButton>
+                  </ToolbarActions>
+                </ReaderToolbar>
+
+                {viewMode === 'preview' ? (
+                  <ContentText>
+                    <ReactMarkdown>{activeVersion.content}</ReactMarkdown>
+                  </ContentText>
+                ) : (
+                  <MarkdownSource>{activeVersion.content}</MarkdownSource>
+                )}
               </ReaderCard>
 
               {activeVersion.edits && activeVersion.edits.length > 0 && (
